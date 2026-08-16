@@ -3454,6 +3454,10 @@ msgstr "Show all duplicated entries in your library"
 msgid "Show continue reading button"
 msgstr "Show continue reading button"
 
+#: src/features/chapter/components/ChapterOptions.tsx
+msgid "Show downloaded chapter previews"
+msgstr "Show downloaded chapter previews"
+
 #: src/features/manga/components/cards/MangaCard.tsx
 #: src/features/manga/hooks/useManageMangaLibraryState.tsx
 #: src/features/migration/components/MigrationOptionsDialog.tsx
