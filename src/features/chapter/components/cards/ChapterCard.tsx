@@ -27,6 +27,7 @@ import { Menu } from '@/base/components/menu/Menu.tsx';
 import { Chapters } from '@/features/chapter/services/Chapters.ts';
 import { applyStyles } from '@/base/utils/ApplyStyles.ts';
 import { ChapterCardMetadata } from '@/features/chapter/components/cards/ChapterCardMetadata.tsx';
+import { ChapterCardPreview } from '@/features/chapter/components/cards/ChapterCardPreview.tsx';
 import { MUIUtil } from '@/lib/mui/MUI.util.ts';
 import { ListCardContent } from '@/base/components/lists/cards/ListCardContent.tsx';
 import type {
@@ -59,6 +60,7 @@ interface IProps {
     mode?: 'manga.page' | 'reader';
     chapter: TChapter;
     showChapterNumber: boolean;
+    showDownloadedChapterPreviews?: boolean;
     onSelect: (id: number, selected: boolean, isShiftKey?: boolean) => void;
     selected: boolean | null;
     selectable?: boolean;
@@ -85,6 +87,7 @@ export const ChapterCard = memo((props: IProps) => {
         mode = 'manga.page',
         chapter,
         showChapterNumber,
+        showDownloadedChapterPreviews = false,
         onSelect,
         selected,
         selectable = true,
@@ -142,6 +145,10 @@ export const ChapterCard = memo((props: IProps) => {
                             {...longPressBind(popupState.open)}
                         >
                             <ListCardContent>
+                                <ChapterCardPreview
+                                    showChapterPreviews={showDownloadedChapterPreviews}
+                                    chapter={chapter}
+                                />
                                 <ChapterCardMetadata
                                     title={showChapterNumber ? `${t`Chapter`} ${chapter.chapterNumber}` : chapter.name}
                                     secondaryText={chapter.scanlator}
