@@ -79,6 +79,7 @@ export const GET_CHAPTERS_MANGA = gql`
         ) {
             nodes {
                 ...CHAPTER_LIST_FIELDS
+                pageCount
             }
             pageInfo {
                 ...PAGE_INFO

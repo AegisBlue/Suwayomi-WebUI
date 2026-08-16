@@ -1,7 +1,14 @@
 # Downloaded Chapter Previews
 
-Optional chapter list feature that shows the first page of a chapter as a thumbnail next to the
-chapter row - **only when that chapter is already downloaded locally**.
+Optional chapter list feature that shows a page of a chapter as a landscape panel thumbnail next to
+the chapter row - **only when that chapter is already downloaded locally**.
+
+The shown page is a **stable pseudo-random page** of the chapter (inspired by OmegaScans-style
+per-chapter panel thumbnails): the page index is derived deterministically from the chapter id
+(`getChapterPreviewPageIndex`), so each chapter shows a different, representative page while the
+same chapter always shows the same page across re-renders, scrolling and reloads (no flicker, fully
+cacheable). The index is bounded by the chapter's `pageCount` so only pages that exist in the local
+download are ever requested; if the page count is unknown, the first page is used.
 
 ## Feature behavior
 
@@ -31,13 +38,13 @@ ChapterCard
 ChapterCardPreview
     ↓ isChapterPreviewEligible(showChapterPreviews, chapter)   ← setting + isDownloaded guard
     ├── not eligible → render nothing, ZERO requests
-    └── eligible     → requestManager.getChapterPageUrl(mangaId, sourceOrder, 0)
-                        ↓
+    └── eligible     → requestManager.getChapterPageUrl(mangaId, sourceOrder, previewPageIndex)
+                        ↓ previewPageIndex = getChapterPreviewPageIndex(chapter)  (stable, < pageCount)
                      SpinnerImage (existing lazy/queued image loading)
                         ↓
-                     GET /api/v1/manga/{mangaId}/chapter/{sourceOrder}/page/0  (Suwayomi server)
+                     GET /api/v1/manga/{mangaId}/chapter/{sourceOrder}/page/{previewPageIndex}
                         ↓
-                     locally stored first page of the downloaded chapter
+                     locally stored page of the downloaded chapter
 ```
 
 No GraphQL operation is involved. In particular, `fetchChapterPages` is **not** used - it is a
@@ -56,13 +63,16 @@ chapters:
 - Server: this route is handled by `MangaController.pageRetrieve` → `Page.getPageImage`
   (Suwayomi-Server). For chapters with `isDownloaded == true` it returns the image directly from the
   locally stored download (`ChapterDownloadHelper.getImage`) - folder or CBZ - without contacting
-  the source. It does not require a page list; pages are addressed by index, and page `0` always
-  exists for a valid download.
+  the source. It does not require a page list; pages are addressed by index.
+- The preview page index comes from `getChapterPreviewPageIndex` and is clamped into
+  `[0, pageCount)`. `pageCount` is fetched as part of the chapter list query (`GET_CHAPTERS_MANGA`
+  and `REFRESH_MANGA` select it) and reflects the downloaded chapter's actual page count. If it is
+  not (yet) known, page `0` is used, which always exists for a valid download.
 - Because the page is served from local files, downloaded chapter previews keep working while the
   manga source is unreachable.
 
 Eligibility is decided by `chapter.isDownloaded` only - `pageCount` is intentionally **not** used
-as a proxy for the download state.
+as a proxy for the download state; it only bounds which page index may be requested.
 
 ### Known server-side caveat
 
@@ -91,8 +101,10 @@ local preview unavailable → no preview shown → never a client-side remote fa
   with hundreds of downloaded chapters only loads previews for the rows on screen.
 - Image loading goes through the existing `SpinnerImage`/`RequestManager.requestImage` queue with
   `Priority.LOW`, and requests are aborted when rows are scrolled out/unmounted.
-- The full-size first page is displayed at thumbnail size via CSS; no server-side thumbnail
-  generation is used.
+- The full-size page is displayed at thumbnail size via a CSS landscape center-crop; no server-side
+  thumbnail generation is used.
+- The stable page index keeps the image url constant per chapter, so browser/http caching keeps
+  working while scrolling.
 
 ## Testing
 
@@ -106,15 +118,23 @@ state changes flip eligibility.
 
 ```text
 package.json                                                        (test script)
-src/features/chapter/Chapter.types.ts                               (ChapterListOptions)
+src/features/chapter/Chapter.types.ts                               (ChapterListOptions, ChapterPageCountInfo)
 src/features/chapter/Chapter.constants.ts                           (default: off)
 src/features/chapter/components/ChapterList.tsx                     (pass option down)
 src/features/chapter/components/ChapterOptions.tsx                  (display tab toggle)
 src/features/chapter/components/cards/ChapterCard.tsx               (render preview)
 src/features/chapter/components/cards/ChapterCardPreview.tsx        (new: preview component)
 src/features/chapter/utils/ChapterList.util.tsx                     (option plumbing)
-src/features/chapter/utils/ChapterPreview.util.ts                   (new: eligibility guard)
+src/features/chapter/utils/ChapterPreview.util.ts                   (new: eligibility guard + page index)
 src/features/chapter/utils/ChapterPreview.util.test.ts              (new: tests)
 src/features/metadata/Metadata.constants.ts                         (metadata key registration)
+src/lib/graphql/chapter/ChapterQuery.ts                             (select pageCount)
+src/lib/graphql/manga/MangaMutation.ts                              (select pageCount)
+src/lib/graphql/generated/graphql.ts                                (pageCount in generated types*)
 docs/chapter-previews.md                                            (this file)
 ```
+
+\* The `pageCount` additions in `src/lib/graphql/generated/graphql.ts` were applied manually
+(mirroring exactly what `pnpm gql:codegen` emits for the changed selections) because a full codegen
+run against a live server regenerates the whole file with unrelated formatting churn. A future
+proper codegen run will produce the same fields.

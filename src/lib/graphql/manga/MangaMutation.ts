@@ -22,6 +22,7 @@ export const REFRESH_MANGA = gql`
             }
             chapters @include(if: $fetchChapters) {
                 ...CHAPTER_LIST_FIELDS
+                pageCount
             }
         }
     }

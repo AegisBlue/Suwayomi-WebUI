@@ -749,6 +749,7 @@ export type GetChaptersMangaQuery = {
             fetchedAt: string;
             uploadDate: string;
             lastReadAt: string;
+            pageCount: number;
             id: number;
             name: string;
             mangaId: number;
@@ -2089,6 +2090,7 @@ export type RefreshMangaMutation = {
             fetchedAt: string;
             uploadDate: string;
             lastReadAt: string;
+            pageCount: number;
             id: number;
             name: string;
             mangaId: number;

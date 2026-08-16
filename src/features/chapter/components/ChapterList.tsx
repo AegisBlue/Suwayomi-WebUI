@@ -26,7 +26,6 @@ import { ChaptersToolbarMenu } from '@/features/chapter/components/ChaptersToolb
 import { SelectionFAB } from '@/base/collection/components/SelectionFAB.tsx';
 import { DEFAULT_FULL_FAB_HEIGHT } from '@/base/components/buttons/StyledFab.tsx';
 import type {
-    ChapterListFieldsFragment,
     GetChaptersMangaQuery,
     GetChaptersMangaQueryVariables,
     MangaScreenFieldsFragment,
@@ -79,7 +78,7 @@ const ChapterListFAB = ({
     firstUnreadChapter,
     onFABMenuClose,
 }: {
-    selectedChapters: ChapterListFieldsFragment[];
+    selectedChapters: GetChaptersMangaQuery['chapters']['nodes'];
     firstUnreadChapter: ComponentProps<typeof ResumeFab>['chapter'] | null | undefined;
     onFABMenuClose?: () => void;
 }) => {
