@@ -37,6 +37,7 @@ import type {
     ChapterMangaInfo,
     ChapterNameInfo,
     ChapterNumberInfo,
+    ChapterPageCountInfo,
     ChapterReadInfo,
     ChapterScanlatorInfo,
     ChapterSourceOrderInfo,
@@ -54,6 +55,7 @@ type TChapter = ChapterIdInfo &
     ChapterScanlatorInfo &
     ChapterNameInfo &
     ChapterSourceOrderInfo &
+    ChapterPageCountInfo &
     Pick<ChapterType, 'uploadDate'>;
 
 interface IProps {

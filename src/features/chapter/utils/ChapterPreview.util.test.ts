@@ -8,7 +8,7 @@
 
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { isChapterPreviewEligible } from '@/features/chapter/utils/ChapterPreview.util.ts';
+import { getChapterPreviewPageIndex, isChapterPreviewEligible } from '@/features/chapter/utils/ChapterPreview.util.ts';
 
 describe('isChapterPreviewEligible', () => {
     it('does not allow previews for undownloaded chapters', () => {
@@ -30,5 +30,35 @@ describe('isChapterPreviewEligible', () => {
         assert.equal(isChapterPreviewEligible(true, chapter), false);
         assert.equal(isChapterPreviewEligible(true, { ...chapter, isDownloaded: true }), true);
         assert.equal(isChapterPreviewEligible(true, { ...chapter, isDownloaded: false }), false);
+    });
+});
+
+describe('getChapterPreviewPageIndex', () => {
+    it('always stays within the bounds of the page count', () => {
+        for (let id = 1; id <= 500; id += 1) {
+            for (const pageCount of [1, 2, 3, 17, 200]) {
+                const index = getChapterPreviewPageIndex({ id, pageCount });
+                assert.ok(index >= 0 && index < pageCount, `id ${id}, pageCount ${pageCount} -> ${index}`);
+            }
+        }
+    });
+
+    it('is stable for the same chapter', () => {
+        const chapter = { id: 42, pageCount: 25 };
+
+        assert.equal(getChapterPreviewPageIndex(chapter), getChapterPreviewPageIndex({ ...chapter }));
+    });
+
+    it('varies across chapters', () => {
+        const indexes = new Set(
+            Array.from({ length: 50 }, (_, index) => getChapterPreviewPageIndex({ id: index + 1, pageCount: 20 })),
+        );
+
+        assert.ok(indexes.size > 1);
+    });
+
+    it('falls back to the first page for an unknown page count', () => {
+        assert.equal(getChapterPreviewPageIndex({ id: 1, pageCount: 0 }), 0);
+        assert.equal(getChapterPreviewPageIndex({ id: 1, pageCount: -1 }), 0);
     });
 });

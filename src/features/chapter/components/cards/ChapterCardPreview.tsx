@@ -13,16 +13,20 @@ import { requestManager } from '@/lib/requests/RequestManager.ts';
 import { Priority } from '@/lib/Queue.ts';
 import type {
     ChapterDownloadInfo,
+    ChapterIdInfo,
     ChapterMangaInfo,
+    ChapterPageCountInfo,
     ChapterSourceOrderInfo,
 } from '@/features/chapter/Chapter.types.ts';
-import { isChapterPreviewEligible } from '@/features/chapter/utils/ChapterPreview.util.ts';
+import { getChapterPreviewPageIndex, isChapterPreviewEligible } from '@/features/chapter/utils/ChapterPreview.util.ts';
 
-const PREVIEW_WIDTH = 56;
-const PREVIEW_HEIGHT = 84;
+// landscape panel crop of a page (OmegaScans style chapter thumbnails)
+const PREVIEW_WIDTH = { xs: 100, sm: 140 };
+const PREVIEW_HEIGHT = { xs: 60, sm: 84 };
 
 /**
- * Shows the first page of a downloaded chapter as a thumbnail.
+ * Shows a page of a downloaded chapter as a thumbnail (a stable pseudo-random page per chapter,
+ * cropped to a landscape panel - see {@link getChapterPreviewPageIndex}).
  *
  * The preview url points at the server's page endpoint, which serves downloaded chapters from the
  * locally stored files. It gets only requested for downloaded chapters ({@link isChapterPreviewEligible}),
@@ -37,7 +41,7 @@ export const ChapterCardPreview = memo(
         chapter,
     }: {
         showChapterPreviews: boolean;
-        chapter: ChapterDownloadInfo & ChapterMangaInfo & ChapterSourceOrderInfo;
+        chapter: ChapterIdInfo & ChapterDownloadInfo & ChapterMangaInfo & ChapterSourceOrderInfo & ChapterPageCountInfo;
     }) => {
         const [failedToLoad, setFailedToLoad] = useState(false);
 
@@ -46,7 +50,11 @@ export const ChapterCardPreview = memo(
         }
 
         // plain url construction - the actual image request only happens for downloaded chapters (see above)
-        const previewUrl = requestManager.getChapterPageUrl(chapter.mangaId, chapter.sourceOrder, 0);
+        const previewUrl = requestManager.getChapterPageUrl(
+            chapter.mangaId,
+            chapter.sourceOrder,
+            getChapterPreviewPageIndex(chapter),
+        );
 
         return (
             <Box
@@ -66,7 +74,7 @@ export const ChapterCardPreview = memo(
                     priority={Priority.LOW}
                     onError={() => setFailedToLoad(true)}
                     spinnerStyle={{ small: true }}
-                    imgStyle={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }}
+                    imgStyle={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }}
                 />
             </Box>
         );
