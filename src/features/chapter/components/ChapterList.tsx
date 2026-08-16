@@ -248,6 +248,7 @@ export const ChapterList = ({
                             chapters={visibleChapters}
                             selected={!areNoItemsSelected ? selectedItemIds.includes(visibleChapters[index].id) : null}
                             showChapterNumber={options.showChapterNumber}
+                            showDownloadedChapterPreviews={options.showDownloadedChapterPreviews}
                             onSelect={onSelect}
                         />
                     )}
