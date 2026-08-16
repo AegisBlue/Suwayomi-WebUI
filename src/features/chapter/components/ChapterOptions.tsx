@@ -11,6 +11,7 @@ import RadioGroup from '@mui/material/RadioGroup';
 import React from 'react';
 import { useLingui } from '@lingui/react/macro';
 import { msg } from '@lingui/core/macro';
+import { CheckboxInput } from '@/base/components/inputs/CheckboxInput.tsx';
 import { RadioInput } from '@/base/components/inputs/RadioInput.tsx';
 import { SortRadioInput } from '@/base/components/inputs/SortRadioInput.tsx';
 import { ThreeStateCheckboxInput } from '@/base/components/inputs/ThreeStateCheckboxInput.tsx';
@@ -96,13 +97,20 @@ export const ChapterOptions: React.FC<IProps> = ({
                 }
                 if (key === 'display') {
                     return (
-                        <RadioGroup
-                            onChange={() => updateOption('showChapterNumber', !options.showChapterNumber)}
-                            value={options.showChapterNumber}
-                        >
-                            <RadioInput label={t`Source title`} value={false} />
-                            <RadioInput label={t`Chapter number`} value />
-                        </RadioGroup>
+                        <>
+                            <RadioGroup
+                                onChange={() => updateOption('showChapterNumber', !options.showChapterNumber)}
+                                value={options.showChapterNumber}
+                            >
+                                <RadioInput label={t`Source title`} value={false} />
+                                <RadioInput label={t`Chapter number`} value />
+                            </RadioGroup>
+                            <CheckboxInput
+                                label={t`Show downloaded chapter previews`}
+                                checked={options.showDownloadedChapterPreviews}
+                                onChange={(_, checked) => updateOption('showDownloadedChapterPreviews', checked)}
+                            />
+                        </>
                     );
                 }
                 return null;
