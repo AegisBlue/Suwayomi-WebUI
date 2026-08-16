@@ -360,6 +360,9 @@ export const APP_METADATA: Record<
     showChapterNumber: {
         convert: convertToBoolean,
     },
+    showDownloadedChapterPreviews: {
+        convert: convertToBoolean,
+    },
     browseLanguages: {
         convert: convertToObject<string[]>,
     },
@@ -509,6 +512,7 @@ export const GLOBAL_METADATA_KEYS: AppMetadataKeys[] = [
     'downloaded',
     'unread',
     'showChapterNumber',
+    'showDownloadedChapterPreviews',
     'excludedScanlators',
 ];
 

@@ -122,12 +122,38 @@ export const isFilterActive = (options: ChapterListFilterOptions) => {
 };
 
 export const useChapterListOptions = (manga: MangaIdInfo & GqlMetaHolder): ChapterListOptions => {
-    const { unread, downloaded, bookmarked, reverse, sortBy, showChapterNumber, excludedScanlators } =
-        useGetMangaMetadata(manga);
+    const {
+        unread,
+        downloaded,
+        bookmarked,
+        reverse,
+        sortBy,
+        showChapterNumber,
+        showDownloadedChapterPreviews,
+        excludedScanlators,
+    } = useGetMangaMetadata(manga);
 
     return useMemo(
-        () => ({ unread, downloaded, bookmarked, reverse, sortBy, showChapterNumber, excludedScanlators }),
-        [unread, downloaded, bookmarked, reverse, sortBy, showChapterNumber, excludedScanlators],
+        () => ({
+            unread,
+            downloaded,
+            bookmarked,
+            reverse,
+            sortBy,
+            showChapterNumber,
+            showDownloadedChapterPreviews,
+            excludedScanlators,
+        }),
+        [
+            unread,
+            downloaded,
+            bookmarked,
+            reverse,
+            sortBy,
+            showChapterNumber,
+            showDownloadedChapterPreviews,
+            excludedScanlators,
+        ],
     );
 };
 

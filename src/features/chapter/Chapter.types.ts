@@ -27,6 +27,7 @@ export interface ChapterListFilterSortOptions extends ChapterListFilterOptions, 
 
 export interface ChapterListOptions extends ChapterListFilterSortOptions {
     showChapterNumber: boolean;
+    showDownloadedChapterPreviews: boolean;
 }
 
 export type TChapterReader = ChapterReaderFieldsFragment;
