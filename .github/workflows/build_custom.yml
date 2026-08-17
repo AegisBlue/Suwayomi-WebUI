@@ -1,0 +1,75 @@
+name: Build custom release
+
+# Builds the custom WebUI from the "custom" branch and publishes it as a versioned GitHub
+# release on this fork (tag "custom-r<revision>", asset "Suwayomi-WebUI-r<revision>.zip").
+# The nexus-ansible "suwayomi_webui" role pulls these releases to deploy the WebUI.
+
+on:
+  push:
+    branches:
+      - custom
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-custom
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build and release custom WebUI
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout custom branch
+        uses: actions/checkout@v4
+        with:
+          # full history - the revision (r<count>) is the commit count
+          fetch-depth: 0
+
+      - name: Set up NodeJs
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: './package.json'
+
+      - uses: pnpm/action-setup@v4.2.0
+        name: Install pnpm
+        with:
+          version: 11.1.2
+
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            **/node_modules
+          key: ${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+
+      - name: Build webUI
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm build
+          pnpm build-zip
+          pnpm build-md5
+          ls buildZip
+
+      - name: Generate tag name
+        id: GenTagName
+        run: |
+          genTag="r$(git rev-list HEAD --count)"
+          echo "$genTag"
+          echo "value=$genTag" >> "$GITHUB_OUTPUT"
+
+      - name: Upload release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: 'buildZip/*'
+          tag: 'custom-${{ steps.GenTagName.outputs.value }}'
+          name: 'Custom WebUI ${{ steps.GenTagName.outputs.value }}'
+          body: |
+            Custom Suwayomi WebUI build (`custom` branch, revision `${{ steps.GenTagName.outputs.value }}`, commit ${{ github.sha }}).
+
+            Includes the downloaded chapter preview feature (see `docs/chapter-previews.md`).
+            Deployed via the `suwayomi_webui` role in nexus-ansible.
+          allowUpdates: true
