@@ -7,6 +7,7 @@
  */
 
 import type { MetadataServerSettingKeys, SearchMetadataKeys } from '@/features/settings/Settings.types.ts';
+import type { ChapterMetadataKeys } from '@/features/chapter/Chapter.types.ts';
 import type { MangaMetadataKeys } from '@/features/manga/Manga.types.ts';
 import type { SourceMetadataKeys } from '@/features/source/Source.types.ts';
 import type { CategoryMetadataKeys } from '@/features/category/Category.types.ts';
@@ -47,6 +48,7 @@ interface MetadataAppliedMigration {
 export type AppMetadataKeys =
     | keyof MetadataAppliedMigration
     | MetadataServerSettingKeys
+    | ChapterMetadataKeys
     | MangaMetadataKeys
     | keyof IReaderSettings
     | SearchMetadataKeys

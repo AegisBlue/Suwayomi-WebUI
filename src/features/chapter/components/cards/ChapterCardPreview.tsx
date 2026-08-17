@@ -18,6 +18,8 @@ import type {
     ChapterPageCountInfo,
     ChapterSourceOrderInfo,
 } from '@/features/chapter/Chapter.types.ts';
+import type { GqlMetaHolder } from '@/features/metadata/Metadata.types.ts';
+import { getChapterMetadata } from '@/features/chapter/services/ChapterMetadata.ts';
 import {
     CHAPTER_PREVIEW_CROP_ASPECT,
     CHAPTER_PREVIEW_MIN_DETAIL_SCORE,
@@ -30,9 +32,9 @@ import {
 const PREVIEW_WIDTH = { xs: 100, sm: 140 };
 const PREVIEW_HEIGHT = { xs: 60, sm: 84 };
 
-// session cache of the picked page and crop per chapter, so scrolling/remounts do not re-run the
-// candidate selection and image analysis
-const previewChoiceByChapter = new Map<number, { pageIndex: number; objectPosition: string }>();
+// session cache of the picked page and crop per chapter (and preview seed), so scrolling/remounts
+// do not re-run the candidate selection and image analysis
+const previewChoiceByChapter = new Map<number, { seed: number; pageIndex: number; objectPosition: string }>();
 
 /**
  * Shows a page of a downloaded chapter as a landscape panel thumbnail.
@@ -40,7 +42,8 @@ const previewChoiceByChapter = new Map<number, { pageIndex: number; objectPositi
  * The page is picked from a few stable pseudo-random candidates ({@link getChapterPreviewPageCandidates});
  * after the image loads, the visually busiest region of the page is used as the crop and
  * essentially blank pages are skipped in favor of the next candidate
- * ({@link analyzeChapterPreviewImage}).
+ * ({@link analyzeChapterPreviewImage}). The chapter's "chapterPreviewSeed" metadata rerolls the
+ * selection ("Change preview" chapter action).
  *
  * The preview url points at the server's page endpoint, which serves downloaded chapters from the
  * locally stored files. It gets only requested for downloaded chapters ({@link isChapterPreviewEligible}),
@@ -55,26 +58,37 @@ export const ChapterCardPreview = memo(
         chapter,
     }: {
         showChapterPreviews: boolean;
-        chapter: ChapterIdInfo & ChapterDownloadInfo & ChapterMangaInfo & ChapterSourceOrderInfo & ChapterPageCountInfo;
+        chapter: ChapterIdInfo &
+            ChapterDownloadInfo &
+            ChapterMangaInfo &
+            ChapterSourceOrderInfo &
+            ChapterPageCountInfo &
+            GqlMetaHolder;
     }) => {
-        const [failedToLoad, setFailedToLoad] = useState(false);
-        const [candidatePosition, setCandidatePosition] = useState(0);
-        const [objectPosition, setObjectPosition] = useState<string>();
+        const [failedSeed, setFailedSeed] = useState<number | null>(null);
+        const [candidateState, setCandidateState] = useState({ seed: 0, position: 0 });
+        const [analyzedCrop, setAnalyzedCrop] = useState<{ seed: number; objectPosition: string }>();
         const imageRef = useRef<HTMLImageElement | HTMLDivElement | null>(null);
 
-        if (!isChapterPreviewEligible(showChapterPreviews, chapter) || failedToLoad) {
+        const { chapterPreviewSeed } = getChapterMetadata(chapter);
+
+        if (!isChapterPreviewEligible(showChapterPreviews, chapter) || failedSeed === chapterPreviewSeed) {
             return null;
         }
 
         const cachedChoice = previewChoiceByChapter.get(chapter.id);
-        const candidates = getChapterPreviewPageCandidates(chapter);
-        const pageIndex = cachedChoice?.pageIndex ?? candidates[Math.min(candidatePosition, candidates.length - 1)];
+        const isCachedChoiceValid = cachedChoice?.seed === chapterPreviewSeed;
+        const candidates = getChapterPreviewPageCandidates(chapter, undefined, chapterPreviewSeed);
+        const candidatePosition = candidateState.seed === chapterPreviewSeed ? candidateState.position : 0;
+        const pageIndex = isCachedChoiceValid
+            ? cachedChoice.pageIndex
+            : candidates[Math.min(candidatePosition, candidates.length - 1)];
 
         // plain url construction - the actual image request only happens for downloaded chapters (see above)
         const previewUrl = requestManager.getChapterPageUrl(chapter.mangaId, chapter.sourceOrder, pageIndex);
 
         const handleLoad = () => {
-            if (previewChoiceByChapter.has(chapter.id)) {
+            if (previewChoiceByChapter.get(chapter.id)?.seed === chapterPreviewSeed) {
                 return;
             }
 
@@ -89,15 +103,24 @@ export const ChapterCardPreview = memo(
                 const isBlankPage = !!analysis && analysis.score < CHAPTER_PREVIEW_MIN_DETAIL_SCORE;
                 const isLastCandidate = candidatePosition >= candidates.length - 1;
                 if (isBlankPage && !isLastCandidate) {
-                    setCandidatePosition(candidatePosition + 1);
+                    setCandidateState({ seed: chapterPreviewSeed, position: candidatePosition + 1 });
                     return;
                 }
 
                 const position = analysis ? `${analysis.xPercent}% ${analysis.yPercent}%` : 'center';
-                previewChoiceByChapter.set(chapter.id, { pageIndex, objectPosition: position });
-                setObjectPosition(position);
+                previewChoiceByChapter.set(chapter.id, {
+                    seed: chapterPreviewSeed,
+                    pageIndex,
+                    objectPosition: position,
+                });
+                setAnalyzedCrop({ seed: chapterPreviewSeed, objectPosition: position });
             });
         };
+
+        const objectPosition =
+            (isCachedChoiceValid ? cachedChoice.objectPosition : undefined) ??
+            (analyzedCrop?.seed === chapterPreviewSeed ? analyzedCrop.objectPosition : undefined) ??
+            'center';
 
         return (
             <Box
@@ -117,13 +140,13 @@ export const ChapterCardPreview = memo(
                     alt=""
                     priority={Priority.LOW}
                     onLoad={handleLoad}
-                    onError={() => setFailedToLoad(true)}
+                    onError={() => setFailedSeed(chapterPreviewSeed)}
                     spinnerStyle={{ small: true }}
                     imgStyle={{
                         width: '100%',
                         height: '100%',
                         objectFit: 'cover',
-                        objectPosition: cachedChoice?.objectPosition ?? objectPosition ?? 'center',
+                        objectPosition,
                     }}
                 />
             </Box>

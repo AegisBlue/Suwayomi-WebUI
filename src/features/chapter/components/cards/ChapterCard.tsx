@@ -229,6 +229,9 @@ export const ChapterCard = memo((props: IProps) => {
                                     chapter={chapter}
                                     handleSelection={() => onSelect(chapter.id, true)}
                                     canBeDownloaded={Chapters.isDownloadable(chapter)}
+                                    canChangePreview={
+                                        mode === 'manga.page' && showDownloadedChapterPreviews && isDownloaded
+                                    }
                                     selectable={selectable}
                                 />
                             )}

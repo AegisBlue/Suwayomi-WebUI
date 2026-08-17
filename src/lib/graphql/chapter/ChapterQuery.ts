@@ -10,6 +10,7 @@ import gql from 'graphql-tag';
 import { PAGE_INFO } from '@/lib/graphql/common/Fragments.ts';
 import {
     CHAPTER_LIST_FIELDS,
+    CHAPTER_META_FIELDS,
     CHAPTER_READER_FIELDS,
     CHAPTER_STATE_FIELDS,
     CHAPTER_UPDATE_LIST_FIELDS,
@@ -55,6 +56,7 @@ export const GET_CHAPTERS_READER = gql`
 // returns the current chapters from the database
 export const GET_CHAPTERS_MANGA = gql`
     ${CHAPTER_LIST_FIELDS}
+    ${CHAPTER_META_FIELDS}
     ${PAGE_INFO}
 
     query GET_CHAPTERS_MANGA(
@@ -80,6 +82,9 @@ export const GET_CHAPTERS_MANGA = gql`
             nodes {
                 ...CHAPTER_LIST_FIELDS
                 pageCount
+                meta {
+                    ...CHAPTER_META_FIELDS
+                }
             }
             pageInfo {
                 ...PAGE_INFO
