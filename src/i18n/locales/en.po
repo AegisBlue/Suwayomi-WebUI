@@ -796,6 +796,10 @@ msgstr "Change categories"
 msgid "Change categories of selected"
 msgstr "Change categories of selected"
 
+#: src/features/chapter/components/actions/ChapterActionMenuItems.tsx
+msgid "Change preview"
+msgstr "Change preview"
+
 #: src/features/app-updates/components/ServerUpdateChecker.tsx
 #: src/features/app-updates/components/VersionUpdateInfoDialog.tsx
 #: src/features/app-updates/components/WebUIUpdateChecker.tsx
@@ -1725,6 +1729,7 @@ msgstr "Failed to disconnect from KOReader Sync server."
 #: src/features/browse/sources/components/SourceCard.tsx
 #: src/features/category/components/CategoriesInclusionSetting.tsx
 #: src/features/category/components/CreateOrEditCategoryDialog.tsx
+#: src/features/chapter/components/actions/ChapterActionMenuItems.tsx
 #: src/features/chapter/components/buttons/ChapterDownloadButton.tsx
 #: src/features/chapter/components/ChapterList.tsx
 #: src/features/device/screens/DeviceSetting.tsx

@@ -44,6 +44,11 @@ import type {
 } from '@/features/chapter/Chapter.types.ts';
 import { IconWebView } from '@/assets/icons/IconWebView.tsx';
 import { IconBrowser } from '@/assets/icons/IconBrowser.tsx';
+import Shuffle from '@mui/icons-material/Shuffle';
+import type { GqlMetaHolder } from '@/features/metadata/Metadata.types.ts';
+import { getChapterMetadata, updateChapterMetadata } from '@/features/chapter/services/ChapterMetadata.ts';
+import { getErrorMessage } from '@/lib/HelperFunctions.ts';
+import { makeToast } from '@/base/utils/Toast.ts';
 
 type BaseProps = { onClose: () => void; selectable?: boolean };
 
@@ -52,12 +57,14 @@ type TChapter = ChapterIdInfo &
     ChapterDownloadInfo &
     ChapterBookmarkInfo &
     ChapterReadInfo &
-    ChapterRealUrlInfo;
+    ChapterRealUrlInfo &
+    GqlMetaHolder;
 
 type SingleModeProps = {
     chapter: TChapter;
     handleSelection?: SelectableCollectionReturnType<TChapter['id']>['handleSelection'];
     canBeDownloaded: boolean;
+    canChangePreview?: boolean;
 };
 
 type SelectModeProps = {
@@ -72,6 +79,7 @@ export const ChapterActionMenuItems = ({
     chapter,
     handleSelection,
     canBeDownloaded = false,
+    canChangePreview = false,
     selectedChapters = STABLE_EMPTY_ARRAY,
     onClose,
     selectable = true,
@@ -219,6 +227,19 @@ export const ChapterActionMenuItems = ({
                         performAction('delete', Chapters.getDeletable(downloadedChapters, deleteChaptersWithBookmark))
                     }
                     title={getMenuItemTitle('delete', downloadedChapters.length)}
+                />
+            )}
+            {isSingleMode && canChangePreview && (
+                <MenuItem
+                    Icon={Shuffle}
+                    onClick={() => {
+                        const { chapterPreviewSeed } = getChapterMetadata(chapter!);
+                        updateChapterMetadata(chapter!, 'chapterPreviewSeed', chapterPreviewSeed + 1).catch((e) =>
+                            makeToast(t`Failed to save changes`, 'error', getErrorMessage(e)),
+                        );
+                        onClose();
+                    }}
+                    title={t`Change preview`}
                 />
             )}
             {shouldShowMenuItem(!isBookmarked) && (

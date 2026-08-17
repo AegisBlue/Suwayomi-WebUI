@@ -363,6 +363,9 @@ export const APP_METADATA: Record<
     showDownloadedChapterPreviews: {
         convert: convertToBoolean,
     },
+    chapterPreviewSeed: {
+        convert: convertToNumber,
+    },
     browseLanguages: {
         convert: convertToObject<string[]>,
     },
@@ -514,6 +517,9 @@ export const GLOBAL_METADATA_KEYS: AppMetadataKeys[] = [
     'showChapterNumber',
     'showDownloadedChapterPreviews',
     'excludedScanlators',
+
+    // chapter
+    'chapterPreviewSeed',
 ];
 
 /**

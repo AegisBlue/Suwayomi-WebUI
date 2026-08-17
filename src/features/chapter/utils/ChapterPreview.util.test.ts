@@ -85,6 +85,27 @@ describe('getChapterPreviewPageCandidates', () => {
         assert.deepEqual(getChapterPreviewPageCandidates({ id: 1, pageCount: 1 }), [0]);
         assert.ok(getChapterPreviewPageCandidates({ id: 1, pageCount: 2 }).length <= 2);
     });
+
+    it('rerolls deterministically via the seed', () => {
+        const chapter = { id: 42, pageCount: 25 };
+
+        assert.deepEqual(getChapterPreviewPageCandidates(chapter), getChapterPreviewPageCandidates(chapter, 3, 0));
+        assert.deepEqual(
+            getChapterPreviewPageCandidates(chapter, 3, 7),
+            getChapterPreviewPageCandidates(chapter, 3, 7),
+        );
+
+        const seeds = new Set(
+            Array.from({ length: 20 }, (_, seed) => getChapterPreviewPageCandidates(chapter, 3, seed)[0]),
+        );
+        assert.ok(seeds.size > 1);
+
+        for (let seed = 0; seed < 50; seed += 1) {
+            for (const candidate of getChapterPreviewPageCandidates({ id: 3, pageCount: 3 }, 3, seed)) {
+                assert.ok(candidate >= 0 && candidate < 3);
+            }
+        }
+    });
 });
 
 const createImage = (width: number, height: number, valueAt: (x: number, y: number) => number): number[] => {

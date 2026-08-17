@@ -23,6 +23,17 @@ The picked page + crop are kept in an in-memory session cache, so scrolling does
 analysis. The analysis is purely client side - no additional server work, and candidate pages are
 requested through the exact same guarded, downloaded-only url construction.
 
+## Changing a chapter's preview
+
+The chapter action menu (three-dot menu of a downloaded chapter, only while previews are enabled)
+contains a **Change preview** action. It increments the chapter's `chapterPreviewSeed` metadata
+(chapter server metadata, key `webUI_chapterPreviewSeed`, set via the existing
+`setChapterMetas`/`requestChapterMetadataUpdate` plumbing), which deterministically rerolls the
+candidate pages for that chapter. The choice is stored server side, so it survives reloads and is
+shared across devices. The chapter list query selects `meta` for this; `getChapterMetadata`
+(`src/features/chapter/services/ChapterMetadata.ts`) intentionally applies metadata migrations
+in-memory only, since committing them would cause one mutation per rendered chapter row.
+
 ## Feature behavior
 
 > Only downloaded chapters receive previews.

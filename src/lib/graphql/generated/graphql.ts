@@ -760,6 +760,7 @@ export type GetChaptersMangaQuery = {
             isRead: boolean;
             isDownloaded: boolean;
             isBookmarked: boolean;
+            meta: Array<{ __typename: 'ChapterMetaType'; chapterId: number; key: string; value: string }>;
         }>;
         pageInfo: {
             __typename: 'PageInfo';
@@ -2101,6 +2102,7 @@ export type RefreshMangaMutation = {
             isRead: boolean;
             isDownloaded: boolean;
             isBookmarked: boolean;
+            meta: Array<{ __typename: 'ChapterMetaType'; chapterId: number; key: string; value: string }>;
         }>;
     } | null;
 };

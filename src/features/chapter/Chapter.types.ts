@@ -57,3 +57,13 @@ export type ChapterScanlatorInfo = Pick<ChapterType, 'scanlator'>;
 export type ChapterRealUrlInfo = Pick<ChapterType, 'realUrl'>;
 
 export type ChapterNameInfo = Pick<ChapterType, 'name'>;
+
+export interface ChapterMetadata {
+    /**
+     * Reroll counter for the downloaded chapter preview page selection - increasing it makes the
+     * preview show a different (still deterministic) page of the chapter.
+     */
+    chapterPreviewSeed: number;
+}
+
+export type ChapterMetadataKeys = keyof ChapterMetadata;

@@ -52,16 +52,20 @@ const scrambleId = (value: number): number => {
  * download get requested - an out-of-range index would make the server treat it as a failed local
  * read. "pageCount" is only used for bounding; preview eligibility is decided solely by
  * {@link isChapterPreviewEligible}. In case the page count is unknown, only the first page is used.
+ *
+ * The "seed" allows rerolling the selection ("Change preview" chapter action) - each seed value
+ * deterministically maps to its own candidate set.
  */
 export const getChapterPreviewPageCandidates = (
     { id, pageCount }: ChapterIdInfo & ChapterPageCountInfo,
     maxCandidates: number = 3,
+    seed: number = 0,
 ): number[] => {
     if (!pageCount || pageCount <= 0) {
         return [0];
     }
 
-    const baseIndex = scrambleId(id) % pageCount;
+    const baseIndex = scrambleId(id + seed * 7919) % pageCount;
     const step = Math.max(1, Math.floor(pageCount / maxCandidates));
     const candidates = Array.from(
         { length: Math.min(maxCandidates, pageCount) },
