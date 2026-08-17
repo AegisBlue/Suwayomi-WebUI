@@ -4,11 +4,24 @@ Optional chapter list feature that shows a page of a chapter as a landscape pane
 the chapter row - **only when that chapter is already downloaded locally**.
 
 The shown page is a **stable pseudo-random page** of the chapter (inspired by OmegaScans-style
-per-chapter panel thumbnails): the page index is derived deterministically from the chapter id
-(`getChapterPreviewPageIndex`), so each chapter shows a different, representative page while the
-same chapter always shows the same page across re-renders, scrolling and reloads (no flicker, fully
-cacheable). The index is bounded by the chapter's `pageCount` so only pages that exist in the local
-download are ever requested; if the page count is unknown, the first page is used.
+per-chapter panel thumbnails): a small ordered set of candidate page indexes is derived
+deterministically from the chapter id (`getChapterPreviewPageCandidates`), so each chapter shows a
+different, representative page while the same chapter always shows the same page across re-renders,
+scrolling and reloads (no flicker, fully cacheable). All indexes are bounded by the chapter's
+`pageCount` so only pages that exist in the local download are ever requested; if the page count is
+unknown, the first page is used.
+
+To avoid empty-looking thumbnails, the loaded page is analyzed client side (`analyzeChapterPreviewImage`,
+a small canvas downscale + luminance-gradient scan - see `findMostDetailedRegion`):
+
+- the crop is positioned on the **visually busiest region** of the page instead of a naive center
+  crop (long-strip pages often have blank sections),
+- a page that is **essentially blank** overall gets skipped and the next deterministic candidate is
+  tried (at most 3 candidates, then the last one is shown regardless).
+
+The picked page + crop are kept in an in-memory session cache, so scrolling does not re-run the
+analysis. The analysis is purely client side - no additional server work, and candidate pages are
+requested through the exact same guarded, downloaded-only url construction.
 
 ## Feature behavior
 
@@ -38,13 +51,15 @@ ChapterCard
 ChapterCardPreview
     ↓ isChapterPreviewEligible(showChapterPreviews, chapter)   ← setting + isDownloaded guard
     ├── not eligible → render nothing, ZERO requests
-    └── eligible     → requestManager.getChapterPageUrl(mangaId, sourceOrder, previewPageIndex)
-                        ↓ previewPageIndex = getChapterPreviewPageIndex(chapter)  (stable, < pageCount)
+    └── eligible     → requestManager.getChapterPageUrl(mangaId, sourceOrder, candidateIndex)
+                        ↓ candidateIndex ∈ getChapterPreviewPageCandidates(chapter)  (stable, < pageCount)
                      SpinnerImage (existing lazy/queued image loading)
                         ↓
-                     GET /api/v1/manga/{mangaId}/chapter/{sourceOrder}/page/{previewPageIndex}
+                     GET /api/v1/manga/{mangaId}/chapter/{sourceOrder}/page/{candidateIndex}
                         ↓
                      locally stored page of the downloaded chapter
+                        ↓
+                     client-side crop analysis (canvas) → busiest region, blank pages skipped
 ```
 
 No GraphQL operation is involved. In particular, `fetchChapterPages` is **not** used - it is a
@@ -64,7 +79,7 @@ chapters:
   (Suwayomi-Server). For chapters with `isDownloaded == true` it returns the image directly from the
   locally stored download (`ChapterDownloadHelper.getImage`) - folder or CBZ - without contacting
   the source. It does not require a page list; pages are addressed by index.
-- The preview page index comes from `getChapterPreviewPageIndex` and is clamped into
+- The preview page indexes come from `getChapterPreviewPageCandidates` and are clamped into
   `[0, pageCount)`. `pageCount` is fetched as part of the chapter list query (`GET_CHAPTERS_MANGA`
   and `REFRESH_MANGA` select it) and reflects the downloaded chapter's actual page count. If it is
   not (yet) known, page `0` is used, which always exists for a valid download.
